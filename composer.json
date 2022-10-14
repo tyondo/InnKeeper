@@ -1,7 +1,7 @@
 {
     "name": "tyondo/innkeeper",
     "type": "package",
-    "description": "An opinionated media-manager module",
+    "description": "A simple straightforward multi-tenancy laravel package",
     "keywords": ["messaging", "rndwiga"],
     "homepage": "https://github.com/Rndwiga/",
     "authors": [
@@ -40,7 +40,7 @@
         }
     },
     "license": "MIT",
-    "minimum-stability": "stable"
-
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
 

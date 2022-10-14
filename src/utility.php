@@ -11,8 +11,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
 
-if (! function_exists('getTagsList')){
-    function getTagsList(){
-       // return (new \Tyondo\EnumManager\Services\TagsManagerService())->getTagsList();
+/*if (! function_exists('exampleFn')){
+    function exampleFn(){
+
     }
-}
+}*/

@@ -19,8 +19,6 @@ class LandlordAuthenticate
     {
         self::$params = $request->route()->parameters;
         if (! Auth::check()) {
-           // return redirect(TyondoCirembo::tenantRoute('cirembo.user.login.form',self::$params['subdomain']));
-           // return redirect(TyondoCirembo::tenantRoute('cirembo.user.login.form'));
             return redirect()->route('cirembo.console.login.form');
         }
         return $next($request);

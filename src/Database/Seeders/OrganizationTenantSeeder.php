@@ -36,7 +36,7 @@ class OrganizationTenantSeeder extends Seeder
     }
 
     public function getOrganizationManagementType(){
-        $statusList = ['manage_organization','new_organization'];
+        $statusList = ['new_organization'];
         $orgIndex = array_rand($statusList,1);
         return $statusList[$orgIndex];
     }
