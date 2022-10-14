@@ -1,0 +1,46 @@
+{
+    "name": "tyondo/innkeeper",
+    "type": "package",
+    "description": "An opinionated media-manager module",
+    "keywords": ["messaging", "rndwiga"],
+    "homepage": "https://github.com/Rndwiga/",
+    "authors": [
+        {
+            "name": "Raphael Ndwiga",
+            "email": "raphaelndwiga.packages@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "plesk/api-php-lib": "^v1.1.3",
+        "ext-curl": "*",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^7.5|^8.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Tyondo\\Innkeeper\\": "src/"
+        },
+        "files": [
+            "src/utility.php"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "optimize-autoloader": true
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Tyondo\\Innkeeper\\InnkeeperServiceProvider"
+            ]
+        }
+    },
+    "license": "MIT",
+    "minimum-stability": "stable"
+
+}
+
