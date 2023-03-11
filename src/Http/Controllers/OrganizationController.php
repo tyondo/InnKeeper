@@ -45,7 +45,22 @@ class OrganizationController extends Controller
             }
             return redirect()->back()->withErrors($validator->errors());
         }else{
-            return (new OrganizationSetup())->initOrganizationSetup($request->all());
+            $org = (new OrganizationSetup())->initOrganizationSetup($request->all());
+            if (isset($org->id)){
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Organization created successfully',
+                    'location_url' => route('innkeeper.organizations.list'),
+                    'data' => $org
+                ],200);
+            }else{
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Sorry we had an issue creating the organization',
+                    'data' => $org
+                ],422);
+            }
+
         }
     }
 

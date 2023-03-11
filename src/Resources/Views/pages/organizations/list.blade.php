@@ -53,7 +53,7 @@
                                 <tr>
 
                                     <td>{{ $organization->name }}</td>
-                                    <td><a href="http://{{ $organization->domain}}" target="_blank">{{ $organization->domain }}</a></td>
+                                    <td><a href="http://{{ $organization->domain . config('innkeeper.tenant_landing_page')}}" target="_blank">{{ $organization->domain }}</a></td>
                                     <td>{{ $organization->users[0]->first_name }}</td>
                                     <td>{{ $organization->users[0]->last_name }}</td>
                                     <td>{{ $organization->users[0]->email }}</td>

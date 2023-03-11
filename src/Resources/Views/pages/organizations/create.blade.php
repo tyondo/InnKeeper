@@ -271,9 +271,9 @@
         $.post(url,formElements,function(data){
             $(e).find("[type='submit']").html("Creating");
             console.log(data);
-            /*if(data.status){
-                window.location=data.redirect_location;
-            }*/
+            if(data.success){
+                window.location=data.location_url;
+            }
         }).fail(function(response) {
             $(e).find("[type='submit']").html("Login");
             $(".alert").remove();

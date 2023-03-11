@@ -155,6 +155,7 @@ class OrganizationSetup
         $this->checkingAndUpdatingUserTable();
           $id=  DB::connection('tenant')->table('users')->insertGetId(
                 [
+                    'user_uid' => Uuid::uuid4(),
                     'first_name' => $this->params['first_name'],
                     'last_name' => $this->params['last_name'],
                     'mobile_number' => $this->params['mobile_number'],
@@ -167,7 +168,7 @@ class OrganizationSetup
 
     private function checkingAndUpdatingUserTable(){
         $columns = [
-            'first_name','last_name','mobile_number','email',
+            'user_uid','first_name','last_name','mobile_number','email',
             'password','created_at'
         ];
         if (Schema::connection('tenant')->hasTable('users')) {

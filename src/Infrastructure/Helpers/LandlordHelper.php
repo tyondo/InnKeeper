@@ -15,9 +15,9 @@ use Tyondo\Innkeeper\Database\Models\Organization\Organization;
 
 class LandlordHelper
 {
-    public static Organization $organization;
-    public static string $tenantSlug;
-    public static string $tenantDomain;
+    public static $organization;
+    public static $tenantSlug;
+    public static $tenantDomain;
 
     public static function setTenantFromDomain(Request $request){
         $server = explode('.', $request->getHttpHost()); //the $request->getHttpHost() will return something like dev.site.com
@@ -27,20 +27,30 @@ class LandlordHelper
         $domain = \config('innkeeper.main_domain');
         if ($domain !== $request->getHttpHost()){
             //to include http/https part of the url we would have used  $request->getSchemeAndHttpHost() to return http://dev.site.com
+            /*if (count($server) >= 3 && $server !== 'www'){
+                //if the number of segments is equal to 3 and the first segment is not equal to www
+                self::$tenantSlug = $server[0];
+                self::$tenantDomain = $request->getHttpHost();
+                self::setTenantBySlug();
+                self::setTenantConnection();
+            }*/
+            //we are solely relying on tenant domain name here
             self::$tenantDomain = $request->getHttpHost();
             self::setTenantByDomain();
             self::setTenantConnection();
+            //return redirect()->to(config('innkeeper.tenant_landing_page'));
             //TODO:- Add checker that if the tenant does not exist, they are redirected somewhere else
         }
     }
 
     public static function setTenantFromSubDomain(Request $request){
-        $server = explode('.', $request->getHttpHost());
+        $server = explode('.', $request->getHttpHost()); //the $request->getHttpHost() will return something like dev.site.com
         $request->merge([
             'domain' => $request->getHttpHost()
         ]);
         $domain = \config('innkeeper.main_domain');
         if ($domain !== $request->getHttpHost()){
+            //to include http/https part of the url we would have used  $request->getSchemeAndHttpHost() to return http://dev.site.com
             if (count($server) >= 3 && $server !== 'www'){
                 //if the number of segments is equal to 3 and the first segment is not equal to www
                 self::$tenantSlug = $server[0];
@@ -59,7 +69,7 @@ class LandlordHelper
     }
 
     public static function getAllTenants(){
-        return Organization::all(['id','name', 'slug','management_status'])->toArray();
+       return Organization::all(['id','name', 'slug','management_status'])->toArray();
     }
 
 

@@ -48,14 +48,14 @@ return [
         'connection' => 'tenant', //do not modify
         'path' => env('INNKEEPER_TENANT_MIGRATIONS_PATH'),
         'commands' => [
-            //'db:wipe',
-            //'migrate:fresh',
-            //'db:seed',
+            'db:wipe',
+            'migrate:fresh',
+            'db:seed',
         ]
     ],
     'execute' => [
         'commands' => [
-            'system:init'
+            //'system:init'
         ]
     ]
 ];

@@ -77,7 +77,6 @@ To make use of this interface you first need to publish the assets to your appli
  php artisan innkeeper:publish:assets
 ````
 
-
 After installing the package, you need to publish the package config file and modify it suit the environment
 where your application currently sit. Out the box, the package supports mysql whether its installed natively
 or though a server management solution Plesk (for now).
