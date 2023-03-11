@@ -3,8 +3,10 @@
 namespace Tyondo\Innkeeper\Infrastructure\Services;
 
 use Carbon\Carbon;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Schema;
 use Ramsey\Uuid\Uuid;
 use Tyondo\Cirembo\Permission\Helpers\AuthorizationHelper;
 use Tyondo\Cirembo\Permission\Models\User;
@@ -16,13 +18,14 @@ use Tyondo\Innkeeper\Infrastructure\Helpers\LandlordHelper;
 
 class OrganizationSetup
 {
-    protected $name;
-    protected $slug;
-    protected $tenantUser;
-    protected $params;
-    protected $org;
-    protected $orgDb;
-    protected $connectionInfo;
+    protected string $name;
+    protected string $slug;
+    protected string $databaseName;
+    protected array $params;
+    protected OrganizationUser $tenantUser;
+    protected Organization $org;
+    protected DatabasePdoHelper $orgDb;
+    protected OrganizationConnection $connectionInfo;
 
     public function initOrganizationSetup(array $userOrganizationDetails){
         $this->tenantUser = new OrganizationUser();
@@ -46,12 +49,14 @@ class OrganizationSetup
     protected function createOrganization(){
 
         $this->slug = self::camelCase($this->params['organization_name']);
+        $this->databaseName = "innkeeper_{$this->slug}";
 
         $this->org->fill([
             'organization_uid' => Uuid::uuid4(),
             'organization_account' => time(),
             'management_status'=> $this->params['management_status'],
             'name' => $this->params['organization_name'],
+            'domain' => $this->params['organization_domain'],
             'slug' =>  $this->slug
         ]);
 
@@ -75,25 +80,31 @@ class OrganizationSetup
             DB::connection('innkeeper')->table('organization_connections')->insert(
                 [
                     'organization_id' => $this->org->id,
-                    'dbUsername' => env('DB_USERNAME'),
-                    'dbHostname' => env('DB_HOST'),
-                    'dbPassword' => env('DB_PASSWORD'),
-                    'dbName' => $this->slug,
+                    'dbUsername' => config("database.connections.mysql.username"),
+                    'dbHostname' => config("database.connections.mysql.host"),
+                    'dbPassword' => config("database.connections.mysql.password"),
+                    'dbName' => $this->databaseName,
                     'created_at' => Carbon::now(),
                 ]);
         }else{
             //creating the organization db
             $innkeeperDbEngine = config('innkeeper.tenant-db-server');
-            $dbHost = env('DB_HOST');
-            $dbPort = env('DB_PORT');
-            $dbUsername = env('DB_USERNAME');
-            $dbPassword = env('DB_PASSWORD');
-            $dbName = $this->slug;
+            $dbHost = config("database.connections.mysql.host");
+            $dbPort = config("database.connections.mysql.port");
+            $dbUsername = config("database.connections.mysql.username");
+            $dbPassword = config("database.connections.mysql.password");
+            $dbName = $this->databaseName;
             $pleskSiteId = config('innkeeper.connections.innkeeper.plesk.web_space_id');
             if ($innkeeperDbEngine === 'mysql'){
                 //TODO:: indicate this as the database administrative credentials for use
                 $orgDb = new DatabasePdoHelper($dbHost,$dbPort,$dbUsername,$dbPassword);
                 $result = $orgDb->pdoCreateDatabase($dbName); //TODO::log this call
+
+                //$charset = config("database.connections.mysql.charset",'utf8mb4');
+                //$collation = config("database.connections.mysql.collation",'utf8mb4_unicode_ci');
+                //$query = "CREATE DATABASE IF NOT EXISTS $dbName CHARACTER SET $charset COLLATE $collation;";
+                //DB::statement($query);
+
             }elseif ($innkeeperDbEngine == 'plesk'){
                 $pleskServer = new PleskServerDbSetup();
                 $pleskServer->setWebSpaceId($pleskSiteId)->setDbName($dbName)
@@ -109,40 +120,65 @@ class OrganizationSetup
                     'dbName' => $dbName,
                     'created_at' => Carbon::now(),
                 ]);
-            LandlordHelper::setTenantFromSlug($dbName);
+            LandlordHelper::setTenantFromSlug($this->slug);
         }
 
     }
 
 
     protected function runMigrations(){
-        $commandList = config('innkeeper.migrations.commands');
+        $migrationConfigs = config('innkeeper.migrations');
+        $commandList = $migrationConfigs['commands'];
         foreach ($commandList as $item){
-            Artisan::call($item,['--no-interaction' => true]);
+            $args = [
+                '--no-interaction' => true,
+                '--database' => $migrationConfigs['connection'],
+            ];
+            if (str_contains($item,'migrate')){
+                $args['--path'] = $migrationConfigs['path'];
+            }
+            Artisan::call($item,$args);
         }
-        /*return Artisan::call('migrate', [
-            '--database' => 'tenant',
-            '--path' => '/database/migrations/tenants' //TODO:: have this as a parameter
-        ]);*/
+        $this->executeOtherSetupCommands();
+    }
+
+    protected function executeOtherSetupCommands(){
+        $commandList = config('innkeeper.execute.commands');
+        foreach ($commandList as $item){
+            Artisan::call($item,[
+                '--no-interaction' => true,
+            ]);
+        }
     }
 
     protected function createUserInTenant(){
+        $this->checkingAndUpdatingUserTable();
+          $id=  DB::connection('tenant')->table('users')->insertGetId(
+                [
+                    'first_name' => $this->params['first_name'],
+                    'last_name' => $this->params['last_name'],
+                    'mobile_number' => $this->params['mobile_number'],
+                    'email' => $this->params['email'],
+                    'password' => bcrypt($this->params['organization_name']),
+                    'created_at' => Carbon::now(),
+                ]);
+          new AuthorizationHelper(User::findOrFail($id));
+    }
 
-      $id=  DB::connection('tenant')->table('users')->insertGetId(
-            [
-               // 'organization_id' => $this->org->id,
-                //'created_by' => 'John Doe',
-                //'user_uid' => Uuid::uuid4(),
-               // 'api_key' => Uuid::uuid4(),
-                'first_name' => $this->params['first_name'],
-                'last_name' => $this->params['last_name'],
-                //'status' => $this->params['organization_status'],
-                'mobile_number' => $this->params['mobile_number'],
-                'email' => $this->params['email'],
-                'password' => bcrypt($this->params['organization_name']),
-                'created_at' => Carbon::now(),
-            ]);
-      new AuthorizationHelper(User::findOrFail($id));
+    private function checkingAndUpdatingUserTable(){
+        $columns = [
+            'first_name','last_name','mobile_number','email',
+            'password','created_at'
+        ];
+        if (Schema::connection('tenant')->hasTable('users')) {
+            foreach ($columns as $column){
+                if (!Schema::connection('tenant')->hasColumn('users', $column)) {
+                    Schema::connection('tenant')->table('users', function (Blueprint $table) use (&$column) {
+                        $table->string($column)->nullable();
+                    });
+                }
+            }
+        }
     }
 
     /**

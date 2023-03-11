@@ -14,14 +14,14 @@ class MigrationCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tyondo:innkeeper:migrate';
+    protected $signature = 'innkeeper:setup:migrate';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Create appropriate tables in the main database. It wipes out all data on that database';
 
     public $migrations_tables = [];
 

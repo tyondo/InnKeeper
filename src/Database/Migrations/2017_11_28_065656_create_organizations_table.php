@@ -20,6 +20,7 @@ class CreateOrganizationsTable extends Migration
             $table->string('organization_uid');
             $table->string('name',255);
             $table->string('slug', 255);
+            $table->string('domain')->unique()->nullable()->index();
             $table->timestamps();
         });
 

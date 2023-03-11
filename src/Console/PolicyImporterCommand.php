@@ -13,14 +13,14 @@ class PolicyImporterCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'tyondo:tags:policy:import';
+    protected $signature = 'innkeeper:setup:policies';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Imports permission policies to db for ease of assignment to roles. It requires authorization package';
 
     /**
      * Create a new command instance.

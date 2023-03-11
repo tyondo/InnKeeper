@@ -15,40 +15,60 @@ use Tyondo\Innkeeper\Database\Models\Organization\Organization;
 
 class LandlordHelper
 {
-    public static $organization;
-    public static $tenantSlug;
+    public static Organization $organization;
+    public static string $tenantSlug;
+    public static string $tenantDomain;
 
     public static function setTenantFromDomain(Request $request){
         $server = explode('.', $request->getHttpHost()); //the $request->getHttpHost() will return something like dev.site.com
         $request->merge([
             'domain' => $request->getHttpHost()
         ]);
-
-        //to include http/https part of the url we would have used  $request->getSchemeAndHttpHost() to return http://dev.site.com
-        if (count($server) >= 3 && $server !== 'www'){
-            //if the number of segments is equal to 3 and the first segment is not equal to www
-            self::$tenantSlug = $server[0];
-
-            self::setTenant();
+        $domain = \config('innkeeper.main_domain');
+        if ($domain !== $request->getHttpHost()){
+            //to include http/https part of the url we would have used  $request->getSchemeAndHttpHost() to return http://dev.site.com
+            self::$tenantDomain = $request->getHttpHost();
+            self::setTenantByDomain();
             self::setTenantConnection();
+            //TODO:- Add checker that if the tenant does not exist, they are redirected somewhere else
         }
-        //return redirect()->to(env('APP_NAME'));
-        //TODO:- Add checker that if the tenant does not exist, they are redirected somewhere else
+    }
+
+    public static function setTenantFromSubDomain(Request $request){
+        $server = explode('.', $request->getHttpHost());
+        $request->merge([
+            'domain' => $request->getHttpHost()
+        ]);
+        $domain = \config('innkeeper.main_domain');
+        if ($domain !== $request->getHttpHost()){
+            if (count($server) >= 3 && $server !== 'www'){
+                //if the number of segments is equal to 3 and the first segment is not equal to www
+                self::$tenantSlug = $server[0];
+                self::$tenantDomain = $request->getHttpHost();
+                self::setTenantBySlug();
+                self::setTenantConnection();
+            }
+            //TODO:- Add checker that if the tenant does not exist, they are redirected somewhere else
+        }
     }
 
     public static function setTenantFromSlug($domainSlug){
         self::$tenantSlug = $domainSlug;
-        self::setTenant();
+        self::setTenantBySlug();
         self::setTenantConnection();
     }
 
     public static function getAllTenants(){
-       return Organization::all(['id','name', 'slug','management_status'])->toArray();
+        return Organization::all(['id','name', 'slug','management_status'])->toArray();
     }
 
 
-    private static function setTenant(){
+    private static function setTenantBySlug(){
         self::$organization = Organization::where('slug', self::$tenantSlug)->firstOrFail();
+    }
+
+    private static function setTenantByDomain(){
+        self::$organization = Organization::where('domain', self::$tenantDomain)->firstOrFail();
     }
 
     private static function setTenantConnection(){

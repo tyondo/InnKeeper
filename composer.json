@@ -25,7 +25,8 @@
             "Tyondo\\Innkeeper\\": "src/"
         },
         "files": [
-            "src/utility.php"
+            "src/utility.php",
+            "src/env_utils.php"
         ]
     },
     "config": {

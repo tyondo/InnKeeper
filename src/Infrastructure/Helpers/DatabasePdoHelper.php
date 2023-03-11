@@ -13,9 +13,10 @@
 namespace Tyondo\Innkeeper\Infrastructure\Helpers;
 
 
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Exception\ProcessFailedException;
 use Symfony\Component\Process\Process;
-use Tyondo\Cirembo\Landlord\ModuleHelper;
+
 
 class DatabasePdoHelper
 {
@@ -161,6 +162,8 @@ class DatabasePdoHelper
 
         try {
             $conn = $this->getPDOConnection();
+            Log::info("CREATE DATABASE {$database}");
+
             $execResults =  $conn->exec("CREATE DATABASE {$database}"); //using exec() since no results are returned
 
             if($execResults){
@@ -411,21 +414,9 @@ class DatabasePdoHelper
      * @return bool|string
      */
     private function createDump($currentDb,$filePath){
-        $command =
-<<<EOT
-    mysqldump --host="\$DB_HOST" --port="\$DB_PORT" --user="\$DB_USERNAME" --password="\$DB_PASSWORD" "\$DB_DATABASE" > "\$FILE_PATH"
-EOT;
-       // $process = new Process($command);
-        $process = new Process($command, base_path(), [
-                'DB_HOST' => $this->dbHost,
-                'DB_PORT' => $this->dbPort,
-                'DB_USERNAME' => $this->dbUser,
-                'DB_PASSWORD' => $this->dbUserPassword,
-                'DB_DATABASE' => $currentDb,
-                'FILE_PATH' => $filePath
-            ]);
-        $process->run();
 
+        $process = Process::fromShellCommandline("mysqldump --add-drop-table --default-character-set=utf8mb4 --host={$this->dbHost} --port={$this->dbPort} --user=$this->dbUser --password=$this->dbUserPassword $currentDb > $filePath");
+        $process->mustRun();
         // executes after the command finishes
         if (!$process->isSuccessful()) {
             throw new ProcessFailedException($process);

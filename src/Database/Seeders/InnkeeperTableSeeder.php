@@ -16,8 +16,9 @@ class InnkeeperTableSeeder extends Seeder
      */
     public function run()
     {
-       // $this->createTypes();
+       //$this->configureEnvironmentFile();
     }
+
 
     private function createTypes(){
 

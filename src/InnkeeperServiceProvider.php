@@ -7,14 +7,18 @@ use Illuminate\Foundation\AliasLoader;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Tyondo\Innkeeper\Console\CreateInnkeeperTenantCommand;
+use Tyondo\Innkeeper\Console\InnkeeperDemoTenantCommand;
+use Tyondo\Innkeeper\Console\InnKeeperEnvSetUpCommand;
 use Tyondo\Innkeeper\Console\MigrationCommand;
 use Tyondo\Innkeeper\Console\PolicyImporterCommand;
+use Tyondo\Innkeeper\Console\PublishAssetsCommand;
 use Tyondo\Innkeeper\Http\Middleware\TenantMiddleware;
 
 class InnkeeperServiceProvider  extends ServiceProvider
 {
     protected static $packageName = 'innkeeper';
+    protected $publishableDir = __DIR__ . '/Publishable/';
+
     protected $providers = [
 
     ];
@@ -24,7 +28,9 @@ class InnkeeperServiceProvider  extends ServiceProvider
     protected $commands = [
         MigrationCommand::class,
         PolicyImporterCommand::class,
-        CreateInnkeeperTenantCommand::class
+        InnkeeperDemoTenantCommand::class,
+        InnKeeperEnvSetUpCommand::class,
+        PublishAssetsCommand::class
     ];
 
     protected $defer = false;
@@ -40,6 +46,7 @@ class InnkeeperServiceProvider  extends ServiceProvider
         $this->bootAdditionWebMiddleware();
 
         $this->bootInnkeeperDbConnection();
+        $this->publishResources();
     }
 
     private function bootInnkeeperDbConnection(){
@@ -110,5 +117,18 @@ class InnkeeperServiceProvider  extends ServiceProvider
     private function registerCommands(){
         $this->commands($this->commands);
     }
-
+    private function publishResources()
+    {
+        $publishable = [
+            'public_'.self::$packageName => [
+                "$this->publishableDir/Public/" => public_path("vendors/".self::$packageName),
+            ],
+            'config_'.self::$packageName => [
+                "$this->publishableDir/Config/".self::$packageName.".php" => config_path(self::$packageName.'.php'),
+            ],
+        ];
+        foreach ($publishable as $group => $paths) {
+            $this->publishes($paths, $group);
+        }
+    }
 }
